@@ -30,7 +30,7 @@ import {
   LEGACY_OPENAI_MULTI_PROVIDER_ID,
   OPENAI_CODEX_PROVIDER_ID,
 } from "./providers/openai-tiers";
-import { decodeRoutedModelIdOrThrow, encodeRoutedModelId } from "./providers/slug-codec";
+import { decodeRoutedModelId, decodeRoutedModelIdOrThrow, encodeRoutedModelId } from "./providers/slug-codec";
 import { effectiveProviderAliasDecision, resolveModelAlias } from "./providers/default-aliases";
 import { resolveBlockedModelRedirect } from "./lib/shadow-call";
 import { workBuddyCatalogIdentity } from "./providers/workbuddy";
@@ -189,9 +189,6 @@ export function knownModelIdsForProvider(
       .digest("hex");
   });
   for (const cached of cachedModels ?? []) ids.add(cached.id);
-  // Display-name keys are operator-declared native ids; they keep a routed slug decodable while
-  // the live roster is cold or its discovery timed out.
-  for (const id of Object.keys(prov.modelDisplayNames ?? {})) ids.add(id);
   for (const model of config?.customModels ?? []) {
     if (model.provider === provName && model.modelId) ids.add(model.modelId);
   }
@@ -586,7 +583,10 @@ function routeModelInternal(
       const decoded = decodeRoutedModelIdOrThrow(requestedModel, known);
       const nativeModel = known.includes(decoded)
         ? decoded
-        : resolveModelAlias(config, prov, known, requestedModel) ?? decoded;
+        : resolveModelAlias(config, prov, known, requestedModel)
+          // Last resort while the live roster is cold: display-name keys are operator-declared
+          // native ids, consulted only here so they never claim aliases or shadow known ids.
+          ?? decodeRoutedModelId(decoded, Object.keys(prov.modelDisplayNames ?? {}));
       return routeResult(
         config,
         provName,
