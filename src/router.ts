@@ -189,6 +189,9 @@ export function knownModelIdsForProvider(
       .digest("hex");
   });
   for (const cached of cachedModels ?? []) ids.add(cached.id);
+  // Display-name keys are operator-declared native ids; they keep a routed slug decodable while
+  // the live roster is cold or its discovery timed out.
+  for (const id of Object.keys(prov.modelDisplayNames ?? {})) ids.add(id);
   for (const model of config?.customModels ?? []) {
     if (model.provider === provName && model.modelId) ids.add(model.modelId);
   }

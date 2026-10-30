@@ -301,6 +301,24 @@ describe("routeModel decode (proxy layer)", () => {
     expect(route.modelId).toBe("vendor/m-2");
   });
 
+  test("modelDisplayNames keys decode a provider-qualified slug with a cold live cache", () => {
+    const config: OcxConfig = {
+      port: 10100,
+      defaultProvider: "other",
+      providers: {
+        other: {
+          adapter: "openai-chat",
+          baseUrl: "https://example.com/v1",
+          apiKey: "k",
+          modelDisplayNames: { "vendor/m-3": "Vendor M3" },
+        },
+      },
+    };
+    const route = routeModel(config, "other/vendor-m-3");
+    expect(route.providerName).toBe("other");
+    expect(route.modelId).toBe("vendor/m-3");
+  });
+
   test("knownModelIdsForProvider unions config, registry, and hint-map ids", () => {
     const ids = knownModelIdsForProvider("zenmux", zenmuxConfig().providers.zenmux!);
     expect(ids).toContain("moonshotai/kimi-k3-free");
