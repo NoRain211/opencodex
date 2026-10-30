@@ -586,9 +586,11 @@ function routeModelInternal(
         : resolveModelAlias(config, prov, known, requestedModel)
           // Last resort for direct requests while the live roster is cold: display-name keys are
           // operator-declared native ids, consulted only here so they never claim aliases or shadow
-          // known ids. Concrete policy/combo/redirect targets (bypassCombos) keep the exact model
-          // their evaluator selected, so evidence and eligibility describe what is sent.
-          ?? (bypassCombos ? decoded : decodeRoutedModelId(decoded, Object.keys(prov.modelDisplayNames ?? {})));
+          // known or retained ids. Concrete policy/combo/redirect targets (bypassCombos) keep the
+          // exact model their evaluator selected, so evidence and eligibility describe what is sent.
+          ?? (bypassCombos || prov.retainModels?.includes(decoded)
+            ? decoded
+            : decodeRoutedModelId(decoded, Object.keys(prov.modelDisplayNames ?? {})));
       return routeResult(
         config,
         provName,
